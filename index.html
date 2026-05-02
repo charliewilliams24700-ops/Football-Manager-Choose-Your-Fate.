@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Football Manager: Choose Your Fate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Home Screen Icon Setup - Using manager.png.jpg -->
+    <link rel="apple-touch-icon" href="manager.png.jpg">
+    <link rel="icon" type="image/jpeg" href="manager.png.jpg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Football Manager">
+    <meta name="theme-color" content="#0a4d2e">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0a4d2e;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h1 { 
+            text-align: center; 
+            margin: 10px 0 20px 0;
+            font-size: 1.8em;
+        }
+        .stats {
+            background: #083a23;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #1a5c3a;
+            margin-bottom: 20px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .stat-label {
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        .stat-value {
+            font-size: 1.1em;
+        }
+        .stat-bar {
+            width: 100%;
+            height: 8px;
+            background: #1a5c3a;
+            border-radius: 4px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .stat-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .morale-fill { background: #ffd700; }
+        .fans-fill { background: #4a90e2; }
+        .board-fill { background: #e74c3c; }
+        .rebirth-stats {
+            color: #ffd700;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .scenario-card {
+            background: #083a23;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #1a5c3a;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .scenario-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        .scenario-text {
+            font-size: 1.05em;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .choice-btn {
+            background: #1a5c3a;
+            border: 2px solid #2d7a4f;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .choice-btn:hover {
+            background: #2d7a4f;
+            transform: translateX(5px);
+        }
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+        .choice-effect {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        .result-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #083a23;
+            padding: 25px;
+            border-radius: 12px;
+            border: 3px solid #ffd700;
+            z-index: 1000;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        .result-popup h2 {
+            margin: 0 0 15px 0;
+            color: #ffd700;
+        }
+        .result-popup button {
+            background: #1a5c3a;
+            border: 2px solid #2d7a4f;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 15px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+        }
+        .season-info {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+        #restart-btn {
+            background: #8b0000;
+            border: 2px solid #b22222;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px auto 0;
+            display: block;
+            transition: background 0.2s;
+        }
+        #restart-btn:hover { background: #b22222; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚽ Football Manager ⚽</h1>
+        
+        <div class="stats">
+            <div class="stat-row">
+                <span class="stat-label">💰 Money</span>
+                <span class="stat-value">£<span id="money">10000</span></span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">😊 Morale</span>
+                <span class="stat-value"><span id="morale">50</span>/100</span>
+            </div>
+            <div class="stat-bar"><div class="stat-fill morale-fill" id="morale-bar" style="width: 50%"></div></div>
+            
+            <div class="stat-row">
+                <span class="stat-label">👥 Fans</span>
+                <span class="stat-value"><span id="fans">100</span></span>
+            </div>
+            <div class="stat-bar"><div class="stat-fill fans-fill" id="fans-bar" style="width: 10%"></div></div>
+            
+            <div class="stat-row">
+                <span class="stat-label">📋 Board Trust</span>
+                <span class="stat-value"><span id="board">50</span>/100</span>
+            </div>
+            <div class="stat-bar"><div class="stat-fill board-fill" id="board-bar" style="width: 50%"></div></div>
+            
+            <div class="rebirth-stats" id="rebirth-info" style="display:none;">
+                Rebirths: <span id="rebirth-count">0</span> | +£<span id="rebirth-bonus">0</span>/s | <span id="rebirth-mult">1</span>x Multiplier
+            </div>
+        </div>
+
+        <div class="season-info">
+            Season <span id="season">1</span> | Scenario <span id="scenario-num">0</span>/20
+        </div>
+
+        <div class="scenario-card" id="scenario-card">
+            <div>
+                <div class="scenario-title" id="scenario-title">Welcome, Gaffer!</div>
+                <div class="scenario-text" id="scenario-text">You're starting your career at a small club. The board has given you £10,000 to begin. Can you take them to glory?</div>
+            </div>
+            <div class="choices" id="choices">
+                <button class="choice-btn" onclick="startGame()">Start Season 1</button>
+            </div>
+        </div>
+
+        <button id="restart-btn" onclick="restartGame()">Restart Career</button>
+    </div>
+
+<script>
+let money = 10000;
+let morale = 50;
+let fans = 100;
+let board = 50;
+let season = 1;
+let scenarioInSeason = 0;
+let rebirthCount = 0;
+let currentScenario = null;
+let passiveIncomeInterval = null;
+let gameStarted = false;
+
+const SCENARIOS_PER_SEASON = 20;
+
+const SCENARIOS = [
+    {
+        title: "Transfer Request",
+        text: "Your star striker wants a new contract. He's asking for £50k/week.",
+        choices: [
+            { text: "Pay him", money: -50000, morale: 10, fans: 0, board: -5 },
+            { text: "Sell him", money: 200000, morale: -15, fans: -10, board: 5 },
+            { text: "Negotiate £30k", money: -30000, morale: 5, fans: 0, board: 0, risk: 0.5, riskFail: { morale: -25 } }
+        ]
+    },
+    {
+        title: "Soft Penalty",
+        text: "89th minute, 1-0 down. The ref gives you a very soft penalty.",
+        choices: [
+            { text: "Take it", money: 0, morale: 0, fans: 0, board: 0, risk: 0.7, riskSuccess: { money: 100000, morale: 15 }, riskFail: { morale: -10 } },
+            { text: "Miss on purpose", money: -100000, morale: -5, fans: 20, board: 10 },
+            { text: "Sub on super-sub", money: -10000, morale: 0, fans: 0, board: 0, risk: 0.9, riskSuccess: { money: 100000, morale: 10 }, riskFail: { morale: -5 } }
+        ]
+    },
+    {
+        title: "Board Demands",
+        text: "Board wants attacking football but you have 5 defenders injured.",
+        choices: [
+            { text: "Agree", money: 50000, morale: 0, fans: 5, board: 10 },
+            { text: "Refuse", money: -20000, morale: 15, fans: 0, board: -15 },
+            { text: "Play 3-5-2", money: 0, morale: 0, fans: 0, board: 5, risk: 0.5, riskSuccess: { money: 30000 }, riskFail: { money: -30000, morale: -10 } }
+        ]
+    },
+    {
+        title: "Youth Prospect",
+        text: "A 16-year-old academy player is tearing it up. Promote him?",
+        choices: [
+            { text: "Promote now", money: 0, morale: 10, fans: 15, board: -5, risk: 0.6, riskFail: { morale: -15 } },
+            { text: "Loan him out", money: 10000, morale: 0, fans: 0, board: 5 },
+            { text: "Keep in academy", money: 0, morale: -5, fans: -5, board: 0 }
+        ]
+    },
+    {
+        title: "Fan Protest",
+        text: "Fans are protesting ticket prices outside the stadium.",
+        choices: [
+            { text: "Lower prices", money: -30000, morale: 5, fans: 30, board: -10 },
+            { text: "Ignore them", money: 0, morale: -10, fans: -20, board: 5 },
+            { text: "Meet with leaders", money: -5000, morale: 0, fans: 15, board: 0 }
+        ]
+    },
+    {
+        title: "Injury Crisis",
+        text: "Your first-choice keeper is out for 3 months. Sign a replacement?",
+        choices: [
+            { text: "Sign experienced keeper", money: -80000, morale: 5, fans: 5, board: 5 },
+            { text: "Use youth keeper", money: 0, morale: -5, fans: -5, board: -5, risk: 0.4, riskFail: { money: -50000, morale: -10 } },
+            { text: "Free transfer", money: -20000, morale: 0, fans: 0, board: 0 }
+        ]
+    },
+    {
+        title: "Derby Day",
+        text: "It's the derby. Win = £200k bonus. Your captain is on 4 yellows.",
+        choices: [
+            { text: "Play him", money: 0, morale: 0, fans: 0, board: 0, risk: 0.8, riskSuccess: { money: 200000, morale: 20, fans: 25 }, riskFail: { morale: -15, fans: -10 } },
+            { text: "Rest him", money: 0, morale: -10, fans: -15, board: 0, risk: 0.4, riskSuccess: { money: 200000 } },
+            { text: "Play 45 mins only", money: 0, morale: 0, fans: 0, board: 0, risk: 0.6, riskSuccess: { money: 200000, morale: 10 } }
+        ]
+    },
+    {
+        title: "Sponsorship Deal",
+        text: "A betting company offers £500k sponsorship. Fans hate gambling ads.",
+        choices: [
+            { text: "Accept deal", money: 500000, morale: -5, fans: -25, board: 15 },
+            { text: "Decline", money: 0, morale: 5, fans: 20, board: -10 },
+            { text: "Negotiate terms", money: 300000, morale: 0, fans: -10, board: 5 }
+        ]
+    },
+    {
+        title: "Training Ground Issue",
+        text: "Training pitches are waterlogged. Team can't train properly.",
+        choices: [
+            { text: "Upgrade pitches", money: -150000, morale: 20, fans: 5, board: 10 },
+            { text: "Rent facilities", money: -30000, morale: 5, fans: 0, board: 0 },
+            { text: "Train anyway", money: 0, morale: -15, fans: 0, board: -5, risk: 0.3, riskFail: { money: -50000 } }
+        ]
+    },
+    {
+        title: "Press Conference",
+        text: "Reporter asks about your title chances. You're 10 points off top.",
+        choices: [
+            { text: "We're going to win it!", money: 0, morale: 15, fans: 20, board: -10, risk: 0.2, riskFail: { morale: -20, board: -20 } },
+            { text: "Top 4 is the goal", money: 0, morale: 5, fans: 5, board: 10 },
+            { text: "One game at a time", money: 0, morale: 0, fans: 0, board: 5 }
+        ]
+    },
+    {
+        title: "Agent Demands",
+        text: "Agent of your best midfielder wants a 20% sell-on clause.",
+        choices: [
+            { text: "Agree", money: 0, morale: 10, fans: 0, board: -15 },
+            { text: "Refuse", money: 0, morale: -20, fans: -10, board: 10, risk: 0.3, riskFail: { money: -100000 } },
+            { text: "Offer 10%", money: 0, morale: 5, fans: 0, board: 0 }
+        ]
+    },
+    {
+        title: "Stadium Expansion",
+        text: "You can expand capacity by 5,000 seats for £2M. Worth it?",
+        choices: [
+            { text: "Build it", money: -2000000, morale: 10, fans: 40, board: 20 },
+            { text: "Wait for promotion", money: 0, morale: 0, fans: 0, board: 5 },
+            { text: "Smaller expansion", money: -800000, morale: 5, fans: 20, board: 10 }
+        ]
+    },
+    {
+        title: "Dressing Room Leak",
+        text: "Someone leaked team news. Morale is damaged. Find the mole?",
+        choices: [
+            { text: "Investigate", money: -20000, morale: -10, fans: 0, board: 15, risk: 0.7, riskSuccess: { morale: 20 } },
+            { text: "Team meeting", money: 0, morale: 10, fans: 0, board: 0 },
+            { text: "Ignore it", money: 0, morale: -20, fans: -5, board: -5 }
+        ]
+    },
+    {
+        title: "Cup Run",
+        text: "You're in the cup semi-final. Rotate squad or go full strength?",
+        choices: [
+            { text: "Full strength", money: 0, morale: 15, fans: 20, board: 5, risk: 0.6, riskSuccess: { money: 300000 }, riskFail: { morale: -10 } },
+            { text: "Rotate", money: 0, morale: -5, fans: -10, board: 10 },
+            { text: "Mix of both", money: 0, morale: 5, fans: 5, board: 5, risk: 0.5, riskSuccess: { money: 300000 } }
+        ]
+    },
+    {
+        title: "Social Media Storm",
+        text: "Your player tweeted something controversial. How do you respond?",
+        choices: [
+            { text: "Fine him", money: 10000, morale: -15, fans: 10, board: 15 },
+            { text: "Defend him", money: 0, morale: 15, fans: -20, board: -10 },
+            { text: "Media training", money: -15000, morale: 5, fans: 5, board: 5 }
+        ]
+    }
+];
+
+function getRebirthMultiplier() {
+    return Math.pow(1.5, rebirthCount);
+}
+
+function getRebirthBonus() {
+    return rebirthCount * 10;
+}
+
+function startGame() {
+    gameStarted = true;
+    
+    passiveIncomeInterval = setInterval(() => {
+        let income = fans * 0.1 * getRebirthMultiplier();
+        if (rebirthCount > 0) {
+            income += getRebirthBonus() * getRebirthMultiplier();
+        }
+        money += income;
+        updateDisplay();
+    }, 1000);
+    
+    nextScenario();
+}
+
+function nextScenario() {
+    scenarioInSeason++;
+    
+    if (scenarioInSeason > SCENARIOS_PER_SEASON) {
+        endSeason();
+        return;
+    }
+    
+    currentScenario = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
+    document.getElementById('scenario-title').textContent = currentScenario.title;
+    document.getElementById('scenario-text').textContent = currentScenario.text;
+    document.getElementById('scenario-num').textContent = scenarioInSeason;
+    
+    const choicesDiv = document.getElementById('choices');
+    choicesDiv.innerHTML = '';
+    
+    currentScenario.choices.forEach((choice, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        
+        let effectText = [];
+        let mult = getRebirthMultiplier();
+        if (choice.money !== 0) effectText.push(`£${choice.money > 0 ? '+' : ''}${Math.floor(choice.money * mult).toLocaleString()}`);
+        if (choice.morale !== 0) effectText.push(`Morale ${choice.morale > 0 ? '+' : ''}${choice.morale}`);
+        if (choice.fans !== 0) effectText.push(`Fans ${choice.fans > 0 ? '+' : ''}${choice.fans}`);
+        if (choice.board !== 0) effectText.push(`Board ${choice.board > 0 ? '+' : ''}${choice.board}`);
+        if (choice.risk) effectText.push(`${Math.round(choice.risk * 100)}% chance`);
+        
+        btn.innerHTML = `
+            ${choice.text}
+            <div class="choice-effect">${effectText.join(' | ')}</div>
+        `;
+        
+        btn.addEventListener('click', function() {
+            makeChoice(index);
+        });
+        
+        choicesDiv.appendChild(btn);
+    });
+}
+
+function makeChoice(index) {
+    if (!gameStarted || !currentScenario) {
+        console.log('Game not started or no scenario');
+        return;
+    }
+    
+    const choice = currentScenario.choices[index];
+    let resultText = '';
+    let resultTitle = 'Result';
+    let mult = getRebirthMultiplier();
+    
+    money += choice.money * mult;
+    morale += choice.morale;
+    fans += choice.fans;
+    board += choice.board;
+    
+    if (choice.risk) {
+        const roll = Math.random();
+        if (roll < choice.risk && choice.riskSuccess) {
+            resultTitle = 'Success!';
+            money += (choice.riskSuccess.money || 0) * mult;
+            morale += choice.riskSuccess.morale || 0;
+            fans += choice.riskSuccess.fans || 0;
+            board += choice.riskSuccess.board || 0;
+            resultText = 'Your gamble paid off!';
+        } else if (roll >= choice.risk && choice.riskFail) {
+            resultTitle = 'It backfired...';
+            money += (choice.riskFail.money || 0) * mult;
+            morale += choice.riskFail.morale || 0;
+            fans += choice.riskFail.fans || 0;
+            board += choice.riskFail.board || 0;
+            resultText = 'Things didn\'t go as planned.';
+        } else {
+            resultText = 'The risk didn\'t pan out.';
+        }
+    } else {
+        resultText = 'Decision made.';
+    }
+    
+    morale = Math.max(0, Math.min(100, morale));
+    fans = Math.max(0, fans);
+    board = Math.max(0, Math.min(100, board));
+    
+    if (board <= 0) {
+        gameOver();
+        return;
+    }
+    
+    if (morale < 20) {
+        resultText += ' Warning: Low morale is affecting performance!';
+    }
+    
+    showResult(resultTitle, resultText);
+    updateDisplay();
+    saveGame();
+}
+
+function showResult(title, text) {
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    overlay.onclick = closeResult;
+    
+    const popup = document.createElement('div');
+    popup.className = 'result-popup';
+    popup.innerHTML = `
+        <h2>${title}</h2>
+        <p>${text}</p>
+        <button>Continue</button>
+    `;
+    popup.querySelector('button').onclick = closeResult;
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
+}
+
+function closeResult() {
+    document.querySelector('.overlay')?.remove();
+    document.querySelector('.result-popup')?.remove();
+    if (gameStarted) {
+        setTimeout(() => nextScenario(), 300);
+    }
+}
+
+function endSeason() {
+    gameStarted = false;
+    
+    let prizeMoney = 50000;
+    prizeMoney += fans * 10;
+    prizeMoney += morale * 100;
+    prizeMoney += board * 100;
+    prizeMoney = Math.floor(prizeMoney * getRebirthMultiplier());
+    
+    money += prizeMoney;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    
+    const popup = document.createElement('div');
+    popup.className = 'result-popup';
+    popup.innerHTML = `
+        <h2>Season ${season} Complete!</h2>
+        <p>Final Stats:</p>
+        <p>💰 Money: £${money.toFixed(0).toLocaleString()}</p>
+        <p>😊 Morale: ${morale}/100</p>
+        <p>👥 Fans: ${fans.toLocaleString()}</p>
+        <p>📋 Board Trust: ${board}/100</p>
+        <p style="margin-top:15px; color:#ffd700;">Prize Money: £${prizeMoney.toLocaleString()}</p>
+        ${money >= 1000000 ? '<button style="background:linear-gradient(135deg,#8b6914,#d4af37);margin-right:10px;" onclick="rebirth()">Rebirth - £1M</button>' : ''}
+        <button onclick="startNewSeason()">Start Season ${season + 1}</button>
+    `;
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
+    updateDisplay();
+    saveGame();
+}
+
+function startNewSeason() {
+    document.querySelector('.overlay')?.remove();
+    document.querySelector('.result-popup')?.remove();
+    season++;
+    scenarioInSeason = 0;
+    document.getElementById('season').textContent = season;
+    startGame();
+}
+
+function rebirth() {
+    if (money < 1000000) return;
+    
+    if (confirm('Rebirth for £1,000,000?\n\nYou will lose all progress but gain:\n+£50k starting money\n+10 fans per second\n1.2x multiplier on everything\n\nThis stacks with each rebirth!')) {
+        rebirthCount++;
+        money = 50000 * rebirthCount;
+        morale = 50;
+        fans = 100 + (rebirthCount * 50);
+        board = 50;
+        season = 1;
+        scenarioInSeason = 0;
+        gameStarted = false;
+        currentScenario = null;
+        
+        document.querySelector('.overlay')?.remove();
+        document.querySelector('.result-popup')?.remove();
+        document.getElementById('scenario-title').textContent = 'Reborn!';
+        document.getElementById('scenario-text').textContent = `You are now a Legendary Manager x${rebirthCount}. You start with £${(50000 * rebirthCount).toLocaleString()}, +${10 * rebirthCount} fans/sec, and a ${getRebirthMultiplier().toFixed(2)}x multiplier on all gains.`;
+        document.getElementById('choices').innerHTML = '<button class="choice-btn" onclick="startGame()">Start Season 1</button>';
+        
+        updateDisplay();
+        saveGame();
+    }
+}
+
+function gameOver() {
+    clearInterval(passiveIncomeInterval);
+    gameStarted = false;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    
+    const popup = document.createElement('div');
+    popup.className = 'result-popup';
+    popup.innerHTML = `
+        <h2>You're Fired!</h2>
+        <p>The board has lost all trust in you. Your time at the club is over.</p>
+        <p>Final Stats:</p>
+        <p>Seasons: ${season}</p>
+        <p>Rebirths: ${rebirthCount}</p>
+        <p>Money: £${money.toFixed(0).toLocaleString()}</p>
+        <p>Fans: ${fans.toLocaleString()}</p>
+        <button onclick="restartGame()">Start New Career</button>
+    `;
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
+}
+
+function restartGame() {
+    if (confirm('Are you sure? This will delete your entire career including rebirths.')) {
+        clearInterval(passiveIncomeInterval);
+        money = 10000;
+        morale = 50;
+        fans = 100;
+        board = 50;
+        season = 1;
+        scenarioInSeason = 0;
+        rebirthCount = 0;
+        gameStarted = false;
+        currentScenario = null;
+        localStorage.removeItem('footballManager');
+        document.querySelector('.overlay')?.remove();
+        document.querySelector('.result-popup')?.remove();
+        document.getElementById('scenario-title').textContent = 'Welcome, Gaffer!';
+        document.getElementById('scenario-text').textContent = 'You\'re starting your career at a small club. The board has given you £10,000 to begin. Can you take them to glory?';
+        document.getElementById('choices').innerHTML = '<button class="choice-btn" onclick="startGame()">Start Season 1</button>';
+        updateDisplay();
+    }
+}
+
+function updateDisplay() {
+    document.getElementById('money').textContent = money.toFixed(0).toLocaleString();
+    document.getElementById('morale').textContent = morale;
+    document.getElementById('fans').textContent = fans.toLocaleString();
+    document.getElementById('board').textContent = board;
+    document.getElementById('season').textContent = season;
+    document.getElementById('scenario-num').textContent = scenarioInSeason;
+    
+    document.getElementById('morale-bar').style.width = morale + '%';
+    document.getElementById('fans-bar').style.width = Math.min(100, fans / 50) + '%';
+    document.getElementById('board-bar').style.width = board + '%';
+    
+    if (rebirthCount > 0) {
+        document.getElementById('rebirth-info').style.display = 'block';
+        document.getElementById('rebirth-count').textContent = rebirthCount;
+        document.getElementById('rebirth-bonus').textContent = getRebirthBonus();
+        document.getElementById('rebirth-mult').textContent = getRebirthMultiplier().toFixed(2);
+    }
+}
+
+function saveGame() {
+    const save = { money, morale, fans, board, season, scenarioInSeason, rebirthCount };
+    localStorage.setItem('footballManager', JSON.stringify(save));
+}
+
+function loadGame() {
+    const save = JSON.parse(localStorage.getItem('footballManager'));
+    if (save && save.season > 1) {
+        money = save.money || 10000;
+        morale = save.morale || 50;
+        fans = save.fans || 100;
+        board = save.board || 50;
+        season = save.season || 1;
+        scenarioInSeason = save.scenarioInSeason || 0;
+        rebirthCount = save.rebirthCount || 0;
+    }
+}
+
+loadGame();
+updateDisplay();
+</script>
+</body>
+</html>
